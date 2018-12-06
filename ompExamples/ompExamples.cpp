@@ -48,16 +48,16 @@ int main() {
 	printf_s("omp_get_num_threads: %d / omp_get_num_procs: %d\r\n",
 		omp_get_num_threads(), omp_get_num_procs());
 
-	testParallelFor(12);
+	//testParallelFor(12);
 	testParralelStructureBlock();
-	testParallelSections(0);
-	testParallelSections(2);
-	testParallelNestedSections(0);
-	testParallelNestedSections(1);
-	testParallelNestedSections(2);
-	testNowait();
-	testOrdered();
-	testAtomic(10, 5);
+	//testParallelSections(0);
+	//testParallelSections(2);
+	//testParallelNestedSections(0);
+	//testParallelNestedSections(1);
+	//testParallelNestedSections(2);
+	//testNowait();
+	//testOrdered();
+	//testAtomic(10, 5);
 	//testCritical(SIZE * 100);
 
 	costs = randomInit(NULL, SIZE, -100, 100);
@@ -66,11 +66,11 @@ int main() {
 	scale(costs, SIZE, 0.3);
 	time1 = omp_get_wtime();
 	printOmpTime("Time of scale: ", time0, time1);
+	delete[] costs;
 
 	printf_s("\n<-- Sort -->\n");
 	if (SIZE > 10000) {
 		SIZE = 10000;
-		delete[] costs;
 		costs = randomInit(NULL, SIZE, -100, 100);
 	}
 	time0 = omp_get_wtime();
@@ -85,8 +85,8 @@ int main() {
 	time1 = omp_get_wtime();
 	printOmpTime("Time of merge: ", time0, time1);
 	//println(costs, SIZE);
-
 	delete[] costs;
+
 	costs = randomInit(NULL, SIZE, -100, 100);
 	omp_set_num_threads(1);
 	time0 = omp_get_wtime();
@@ -183,8 +183,8 @@ int sort(double *d, int size, int(*comparator)(double o1, double o2)) {
 
 void printOmpTime(char const *c, double t0, double t1) {
 	double delta = t1 - t0;
-	printf_s(c);
-	printf_s("%.16g\r\n", delta);
+	//printf_s(c);
+	printf_s("%s: %.16g\n", c, delta);
 }
 
 
