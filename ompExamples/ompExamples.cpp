@@ -5,21 +5,27 @@
 #include <stdlib.h>
 #include "testPragma.h"
 #include "arrayutils.h"
+#include <algorithm>
+#include <vector>
 
 void printOmpTime(char const*, double, double);
 void merge(double *d, int left, int right, int n);
 void merge_parallel(double* d, int size);
-int sort(double *d, int size, int(*comparator)(double o1, double o2));
+int bubbleSort(double *d, int size, int(*comparator)(double o1, double o2));
 
-int SIZE = 1000000;
+int SIZE = 100000;
 
-int compare(double o1, double o2) {
+int dobleComparator(double o1, double o2) {
 	if (o1 > o2)
 		return 1;
 	else if (o1 < o2)
 		return -1;
 	else
 		return 0;
+}
+
+int compare_as_double(double o1, double o2) {
+	return o1 < o2;
 }
 
 void report_num_threads() {
@@ -40,7 +46,7 @@ void scale(double *d, int n, double scale) {
 }
 
 int main() {
-	double *costs = NULL; // = new double[SIZE];
+	double* costs = NULL; // = new double[SIZE];
 
 	double time0;
 	double time1;
@@ -48,16 +54,16 @@ int main() {
 	printf_s("omp_get_num_threads: %d / omp_get_num_procs: %d\r\n",
 		omp_get_num_threads(), omp_get_num_procs());
 
-	//testParallelFor(12);
+	testParallelFor(12);
 	testParralelStructureBlock();
-	//testParallelSections(0);
-	//testParallelSections(2);
-	//testParallelNestedSections(0);
-	//testParallelNestedSections(1);
-	//testParallelNestedSections(2);
-	//testNowait();
-	//testOrdered();
-	//testAtomic(10, 5);
+	testParallelSections(0);
+	testParallelSections(2);
+	testParallelNestedSections(0);
+	testParallelNestedSections(1);
+	testParallelNestedSections(2);
+	testNowait();
+	testOrdered();
+	testAtomic(10, 5);
 	//testCritical(SIZE * 100);
 
 	costs = randomInit(NULL, SIZE, -100, 100);
@@ -65,34 +71,45 @@ int main() {
 	time0 = omp_get_wtime();
 	scale(costs, SIZE, 0.3);
 	time1 = omp_get_wtime();
-	printOmpTime("Time of scale: ", time0, time1);
+	printOmpTime("Time of scale", time0, time1);
 	delete[] costs;
 
 	printf_s("\n<-- Sort -->\n");
 	if (SIZE > 10000) {
 		SIZE = 10000;
-		costs = randomInit(NULL, SIZE, -100, 100);
 	}
+	costs = randomInit(NULL, SIZE, -100, 100);
 	time0 = omp_get_wtime();
-	sort(costs, SIZE, compare);
-	time1 = omp_get_wtime();
-	printOmpTime("Time of sort: ", time0, time1);
+	bubbleSort(costs, SIZE, dobleComparator);
+	//time1 = omp_get_wtime();
+	//printOmpTime("Time of sort", time0, time1);
 	//print(costs, SIZE);
 
 	printf_s("\n<-- Merge -->\n");
-	time0 = omp_get_wtime();
+	//time0 = omp_get_wtime();
 	merge_parallel(costs, SIZE);
 	time1 = omp_get_wtime();
-	printOmpTime("Time of merge: ", time0, time1);
+	printOmpTime("Time of sort", time0, time1);
 	//println(costs, SIZE);
 	delete[] costs;
 
+	printf_s("\n<-- Serial bubbleSort -->\n");
 	costs = randomInit(NULL, SIZE, -100, 100);
 	omp_set_num_threads(1);
 	time0 = omp_get_wtime();
-	sort(costs, SIZE, compare);
+	bubbleSort(costs, SIZE, dobleComparator);
 	time1 = omp_get_wtime();
-	printOmpTime("Time of serial sort: ", time0, time1);
+	printOmpTime("Time of serial bubbleSort", time0, time1);
+
+	printf_s("\n<-- Serial standart C++ sort -->\n");
+	costs = randomInit(NULL, SIZE, -100, 100);
+	std::vector<double> costsvector;
+	costsvector.assign(costs, costs + SIZE);
+	omp_set_num_threads(1);
+	time0 = omp_get_wtime();
+	std::sort(costsvector.begin(), costsvector.end(), compare_as_double);
+	time1 = omp_get_wtime();
+	printOmpTime("Time of serial standart C++ sort", time0, time1);
 	omp_set_num_threads(omp_get_num_procs());
 
 	delete[]costs;
@@ -151,7 +168,7 @@ void merge_parallel(double* costs, int size) {
 	}
 }
 
-int sort(double *d, int size, int(*comparator)(double o1, double o2)) {
+int bubbleSort(double *d, int size, int(*comparator)(double o1, double o2)) {
 	if (size <= 0)
 		return 0;
 	int num_threads = 0;
@@ -160,6 +177,7 @@ int sort(double *d, int size, int(*comparator)(double o1, double o2)) {
 	int portion = size / num_threads;
 	int flag = 1;
 	int end = 0;
+	const int shedulePortion = 1000;
 	#pragma omp parallel for schedule(static) \
 				shared(portion) private(end) firstprivate(flag)
 	for (int i = 0; i < size - 1; i++) {
@@ -169,7 +187,7 @@ int sort(double *d, int size, int(*comparator)(double o1, double o2)) {
 			flag = 0;
 		}
 		for (int j = i + 1; j < end; j++) {
-			if (comparator(d[i], d[j]) == 1) {
+			if (comparator(d[j], d[i])) {
 				double t = d[j];
 				d[j] = d[i];
 				d[i] = t;
