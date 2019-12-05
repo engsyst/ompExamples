@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "testPragma.h"
 #include "arrayutils.h"
+#include "testShedule.h"
 #include <algorithm>
 #include <vector>
 
@@ -15,7 +16,7 @@ int bubbleSort(double *d, int size, int(*comparator)(double o1, double o2));
 
 int SIZE = 100000;
 
-int dobleComparator(double o1, double o2) {
+int doubleComparator(double o1, double o2) {
 	if (o1 > o2)
 		return 1;
 	else if (o1 < o2)
@@ -54,65 +55,107 @@ int main() {
 	printf_s("omp_get_num_threads: %d / omp_get_num_procs: %d\r\n",
 		omp_get_num_threads(), omp_get_num_procs());
 
-	testParallelFor(12);
-	testParralelStructureBlock();
-	testParallelSections(0);
-	testParallelSections(2);
-	testParallelNestedSections(0);
-	testParallelNestedSections(1);
-	testParallelNestedSections(2);
-	testNowait();
-	testOrdered();
-	testAtomic(10, 5);
+	//testParallelFor(12);
+	//testParralelStructureBlock();
+	//testParallelSections(0);
+	//testParallelSections(2);
+	//testParallelNestedSections(0);
+	//testParallelNestedSections(1);
+	//testParallelNestedSections(2);
+	//testNowait();
+	//testOrdered();
+	//testAtomic(10, 5);
 	//testCritical(SIZE * 100);
 
-	costs = randomInit(NULL, SIZE, -100, 100);
-	testSum(costs, SIZE);
-	time0 = omp_get_wtime();
-	scale(costs, SIZE, 0.3);
-	time1 = omp_get_wtime();
-	printOmpTime("Time of scale", time0, time1);
-	delete[] costs;
-
-	printf_s("\n<-- Sort -->\n");
-	if (SIZE > 10000) {
-		SIZE = 10000;
+	for (size_t i = 0; i < 5; i++)
+	{
+		for (size_t i = 0; i < 5; i++)
+		{
+			costs = randomInit(NULL, SIZE, -100, 100);
+			time0 = omp_get_wtime();
+			testStatic(SIZE, costs, 1.33, 1);
+			testStatic(SIZE, costs, 1.33, 1);
+			testStatic(SIZE, costs, 1.33, 1);
+			testStatic(SIZE, costs, 1.33, 1);
+			testStatic(SIZE, costs, 1.33, 1);
+			time1 = omp_get_wtime();
+			delete[] costs;
+			printOmpTime("Time of scale schedule(static)  ", time0, time1);
+		}
+		for (size_t i = 0; i < 5; i++)
+		{
+			costs = randomInit(NULL, SIZE, -100, 100);
+			time0 = omp_get_wtime();
+			testDynamic(SIZE, costs, 1.33, 1);
+			testDynamic(SIZE, costs, 1.33, 1);
+			testDynamic(SIZE, costs, 1.33, 1);
+			testDynamic(SIZE, costs, 1.33, 1);
+			testDynamic(SIZE, costs, 1.33, 1);
+			time1 = omp_get_wtime();
+			delete[] costs;
+			printOmpTime("Time of scale schedule(dynamic) ", time0, time1);
+		}
+		for (size_t i = 0; i < 5; i++)
+		{
+			costs = randomInit(NULL, SIZE, -100, 100);
+			time0 = omp_get_wtime();
+			testGuided(SIZE, costs, 1.33, 1);
+			testGuided(SIZE, costs, 1.33, 1);
+			testGuided(SIZE, costs, 1.33, 1);
+			testGuided(SIZE, costs, 1.33, 1);
+			testGuided(SIZE, costs, 1.33, 1);
+			time1 = omp_get_wtime();
+			delete[] costs;
+			printOmpTime("Time of scale schedule(guided)  ", time0, time1);
+		}
 	}
-	costs = randomInit(NULL, SIZE, -100, 100);
-	time0 = omp_get_wtime();
-	bubbleSort(costs, SIZE, dobleComparator);
+
+	//costs = randomInit(NULL, SIZE, -100, 100);
+	//testSum(costs, SIZE);
+	//time0 = omp_get_wtime();
+	//scale(costs, SIZE, 0.3);
+	//time1 = omp_get_wtime();
+	//delete[] costs;
+
+	//printf_s("\n<-- Sort -->\n");
+	//if (SIZE > 10000) {
+	//	SIZE = 10000;
+	//}
+	//costs = randomInit(NULL, SIZE, -100, 100);
+	//time0 = omp_get_wtime();
+	//bubbleSort(costs, SIZE, dobleComparator);
+	////time1 = omp_get_wtime();
+	////printOmpTime("Time of sort", time0, time1);
+	////print(costs, SIZE);
+
+	//printf_s("\n<-- Merge -->\n");
+	////time0 = omp_get_wtime();
+	//merge_parallel(costs, SIZE);
 	//time1 = omp_get_wtime();
 	//printOmpTime("Time of sort", time0, time1);
-	//print(costs, SIZE);
+	////println(costs, SIZE);
+	//delete[] costs;
 
-	printf_s("\n<-- Merge -->\n");
+	//printf_s("\n<-- Serial bubbleSort -->\n");
+	//costs = randomInit(NULL, SIZE, -100, 100);
+	//omp_set_num_threads(1);
 	//time0 = omp_get_wtime();
-	merge_parallel(costs, SIZE);
-	time1 = omp_get_wtime();
-	printOmpTime("Time of sort", time0, time1);
-	//println(costs, SIZE);
-	delete[] costs;
+	//bubbleSort(costs, SIZE, dobleComparator);
+	//time1 = omp_get_wtime();
+	//printOmpTime("Time of serial bubbleSort", time0, time1);
 
-	printf_s("\n<-- Serial bubbleSort -->\n");
-	costs = randomInit(NULL, SIZE, -100, 100);
-	omp_set_num_threads(1);
-	time0 = omp_get_wtime();
-	bubbleSort(costs, SIZE, dobleComparator);
-	time1 = omp_get_wtime();
-	printOmpTime("Time of serial bubbleSort", time0, time1);
+	//printf_s("\n<-- Serial standart C++ sort -->\n");
+	//costs = randomInit(NULL, SIZE, -100, 100);
+	//std::vector<double> costsvector;
+	//costsvector.assign(costs, costs + SIZE);
+	//omp_set_num_threads(1);
+	//time0 = omp_get_wtime();
+	//std::sort(costsvector.begin(), costsvector.end(), compare_as_double);
+	//time1 = omp_get_wtime();
+	//printOmpTime("Time of serial standart C++ sort", time0, time1);
+	//omp_set_num_threads(omp_get_num_procs());
 
-	printf_s("\n<-- Serial standart C++ sort -->\n");
-	costs = randomInit(NULL, SIZE, -100, 100);
-	std::vector<double> costsvector;
-	costsvector.assign(costs, costs + SIZE);
-	omp_set_num_threads(1);
-	time0 = omp_get_wtime();
-	std::sort(costsvector.begin(), costsvector.end(), compare_as_double);
-	time1 = omp_get_wtime();
-	printOmpTime("Time of serial standart C++ sort", time0, time1);
-	omp_set_num_threads(omp_get_num_procs());
-
-	delete[]costs;
+	//delete[]costs;
 	//getchar();
 	return 0;
 }
